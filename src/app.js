@@ -4,6 +4,13 @@ const path = require("path");
 const express = require("express");
 const app = express();
 
+const {
+    accounts,
+    users,
+    writeJSON
+} = require("./data");
+
+
 var port = process.env.port || 8080;
 
 app.set('views', path.join(__dirname, '../src/views'));
@@ -15,12 +22,11 @@ app.use('/js', express.static(path.join(__dirname, 'public', 'js')));
 
 app.use(express.urlencoded({ extended: true }));
 
+// const accountData = fs.readFileSync(path.join(__dirname, 'json', 'accounts.json'), 'UTF8');
+// const accounts = JSON.parse(accountData);
 
-const accountData = fs.readFileSync(path.join(__dirname, 'json', 'accounts.json'), 'UTF8');
-const accounts = JSON.parse(accountData);
-
-const userData = fs.readFileSync(path.join(__dirname, 'json', 'users.json'), 'UTF8');
-const users = JSON.parse(userData);
+// const userData = fs.readFileSync(path.join(__dirname, 'json', 'users.json'), 'UTF8');
+// const users = JSON.parse(userData);
 
 app.get('/', function(req, res) {
     res.render('index', {
@@ -58,9 +64,7 @@ app.post('/transfer', function(req, res) {
     var to = req.body.to;
     accounts[from].balance = parseInt(accounts[from].balance) - parseInt(req.body.amount);;
     accounts[to].balance = parseInt(accounts[to].balance) + parseInt(req.body.amount);
-    var accountsJSON = JSON.stringify(accounts);
-
-    fs.writeFileSync(path.join(__dirname, 'json', 'accounts.json'), accountsJSON, 'UTF8')
+    writeJSON();
     res.render('transfer', { message: "Transfer Completed" })
 })
 
@@ -71,8 +75,7 @@ app.get('/payment', function(req, res) {
 app.post('/payment', function(req, res) {
     accounts.credit.balance = parseInt(accounts.credit.balance) - parseInt(req.body.amount);
     accounts.credit.available = parseInt(accounts.credit.available) + parseInt(req.body.amount);
-    var accountsJSON = JSON.stringify(accounts);
-    fs.writeFileSync(path.join(__dirname, 'json', 'accounts.json'), accountsJSON, 'UTF8');
+    writeJSON();
     res.render('payment', { message: "Payment Successful", account: accounts.credit })
 })
 
