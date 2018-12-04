@@ -4,7 +4,7 @@ const path = require("path");
 const express = require("express");
 const app = express();
 
-var port = process.env.port || 3000;
+var port = process.env.port || 8080;
 
 app.set('views', path.join(__dirname, '../src/views'));
 app.set('view engine', 'ejs');
@@ -12,6 +12,9 @@ app.set('view engine', 'ejs');
 app.use('public', express.static(path.join(__dirname, 'public')));
 app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
 app.use('/js', express.static(path.join(__dirname, 'public', 'js')));
+
+app.use(express.urlencoded({ extended: true }));
+
 
 const accountData = fs.readFileSync(path.join(__dirname, 'json', 'accounts.json'), 'UTF8');
 const accounts = JSON.parse(accountData);
@@ -46,6 +49,32 @@ app.get('/profile', function(req, res) {
     res.render('profile', { user: users[0] });
 })
 
+app.get('/transfer', function(req, res) {
+    res.render('transfer');
+})
+
+app.post('/transfer', function(req, res) {
+    var from = req.body.from;
+    var to = req.body.to;
+    accounts[from].balance = parseInt(accounts[from].balance) - parseInt(req.body.amount);;
+    accounts[to].balance = parseInt(accounts[to].balance) + parseInt(req.body.amount);
+    var accountsJSON = JSON.stringify(accounts);
+
+    fs.writeFileSync(path.join(__dirname, 'json', 'accounts.json'), accountsJSON, 'UTF8')
+    res.render('transfer', { message: "Transfer Completed" })
+})
+
+app.get('/payment', function(req, res) {
+    res.render('payment', { account: accounts.credit });
+})
+
+app.post('/payment', function(req, res) {
+    accounts.credit.balance = parseInt(accounts.credit.balance) - parseInt(req.body.amount);
+    accounts.credit.available = parseInt(accounts.credit.available) + parseInt(req.body.amount);
+    var accountsJSON = JSON.stringify(accounts);
+    fs.writeFileSync(path.join(__dirname, 'json', 'accounts.json'), accountsJSON, 'UTF8');
+    res.render('payment', { message: "Payment Successful", account: accounts.credit })
+})
 
 app.listen(port, function() {
     console.log(`PS Project Running on port ${port}!`)
